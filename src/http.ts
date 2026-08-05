@@ -41,6 +41,7 @@ export interface HttpOptions {
     apiUrl?: string;
     workspaceId?: string;
     workspaceLock?: string;
+    projectId?: string;
     readOnly?: string;
     timeZone?: string;
     timeoutMs?: string;
@@ -63,6 +64,7 @@ export function httpOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): HttpOp
       apiUrl: env.CLOCKIFY_API_URL,
       workspaceId: env.CLOCKIFY_WORKSPACE_ID,
       workspaceLock: env.CLOCKIFY_WORKSPACE_LOCK,
+      projectId: env.CLOCKIFY_PROJECT_ID,
       readOnly: env.CLOCKIFY_READ_ONLY,
       timeZone: env.CLOCKIFY_TIMEZONE,
       timeoutMs: env.CLOCKIFY_TIMEOUT_MS,
@@ -99,6 +101,7 @@ export function configFromRequest(req: IncomingMessage, options: HttpOptions): C
     apiUrl: configHeader(req, "x-clockify-url") ?? defaults.apiUrl,
     workspaceId: configHeader(req, "x-clockify-workspace-id") ?? defaults.workspaceId,
     workspaceLock: configHeader(req, "x-clockify-workspace-lock") ?? defaults.workspaceLock,
+    projectId: configHeader(req, "x-clockify-project-id") ?? defaults.projectId,
     readOnly: configHeader(req, "x-clockify-read-only") ?? defaults.readOnly,
     timeZone: configHeader(req, "x-clockify-timezone") ?? defaults.timeZone,
     authType: configHeader(req, "x-clockify-auth-type"),
@@ -210,7 +213,7 @@ function applyCors(req: IncomingMessage, res: ServerResponse): void {
     "Access-Control-Allow-Headers",
     "Content-Type, Accept, Authorization, Last-Event-ID, Mcp-Session-Id, Mcp-Protocol-Version, " +
       "X-Clockify-Key, X-Clockify-Url, X-Clockify-Workspace-Id, X-Clockify-Workspace-Lock, " +
-      "X-Clockify-Read-Only, X-Clockify-Timezone, X-Clockify-Auth-Type",
+      "X-Clockify-Project-Id, X-Clockify-Read-Only, X-Clockify-Timezone, X-Clockify-Auth-Type",
   );
   res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
   res.setHeader("Access-Control-Max-Age", "86400");

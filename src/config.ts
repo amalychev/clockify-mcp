@@ -19,6 +19,12 @@ export interface Config {
   /** Optional default workspace used when a tool omits workspace_id. */
   defaultWorkspace?: string;
   /**
+   * Optional default project, by id or by name. Every entry written without a
+   * project of its own lands here, so a deployment dedicated to one project logs
+   * straight into it.
+   */
+  defaultProject?: string;
+  /**
    * Hard isolation: every tool is confined to `defaultWorkspace`. Requests for
    * any other workspace, and the workspace listing itself, are refused.
    */
@@ -42,6 +48,7 @@ export interface RawConfig {
   authType?: string;
   workspaceId?: string;
   workspaceLock?: string;
+  projectId?: string;
   timeZone?: string;
   readOnly?: string;
   timeoutMs?: string;
@@ -109,6 +116,7 @@ export function resolveConfig(raw: RawConfig): Config {
     authHeader: raw.authType?.trim().toLowerCase() === "bearer" ? "Authorization" : "X-Api-Key",
     defaultWorkspace,
     lockToWorkspace,
+    defaultProject: raw.projectId?.trim() || undefined,
     timeZone,
     readOnly: isTrue(raw.readOnly),
     timeoutMs: toNumber(raw.timeoutMs, 60_000),
@@ -137,6 +145,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       authType: env.CLOCKIFY_AUTH_TYPE,
       workspaceId: env.CLOCKIFY_WORKSPACE_ID,
       workspaceLock: env.CLOCKIFY_WORKSPACE_LOCK ?? env.CLOCKIFY_LOCK_WORKSPACE,
+      projectId: env.CLOCKIFY_PROJECT_ID ?? env.CLOCKIFY_DEFAULT_PROJECT,
       timeZone: env.CLOCKIFY_TIMEZONE ?? env.TZ,
       readOnly: env.CLOCKIFY_READ_ONLY,
       timeoutMs: env.CLOCKIFY_TIMEOUT_MS,

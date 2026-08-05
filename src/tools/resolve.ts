@@ -45,6 +45,46 @@ export async function resolveProjectId(
   return pick(candidates, projectName, "project");
 }
 
+/** Clockify hands out MongoDB object ids; anything else was meant as a name. */
+const CLOCKIFY_ID = /^[0-9a-f]{24}$/i;
+
+/**
+ * Resolved default projects, keyed by workspace and configured value. In HTTP
+ * mode a client is built per request, so a name given as the default would
+ * otherwise cost a project lookup on every entry written.
+ */
+const defaultProjectCache = new Map<string, string>();
+
+/**
+ * The project a write falls back to when the call names none — `CLOCKIFY_PROJECT_ID`
+ * in stdio mode, `X-Clockify-Project-Id` over HTTP. An id is used as it stands, a
+ * name is looked up once per workspace.
+ */
+export async function defaultProjectId(
+  client: ClockifyClient,
+  workspaceId: string,
+): Promise<string | undefined> {
+  const configured = client.config.defaultProject?.trim();
+  if (!configured) return undefined;
+  if (CLOCKIFY_ID.test(configured)) return configured;
+
+  const key = `${workspaceId}|${configured.toLowerCase()}`;
+  const cached = defaultProjectCache.get(key);
+  if (cached) return cached;
+
+  let resolved: string;
+  try {
+    resolved = (await resolveProjectId(client, workspaceId, undefined, configured))!;
+  } catch (error) {
+    throw new Error(
+      `The configured default project (CLOCKIFY_PROJECT_ID / X-Clockify-Project-Id = ` +
+        `\`${configured}\`) could not be used: ${(error as Error).message}`,
+    );
+  }
+  defaultProjectCache.set(key, resolved);
+  return resolved;
+}
+
 export async function resolveTaskId(
   client: ClockifyClient,
   workspaceId: string,

@@ -20,7 +20,7 @@ import {
   workspaceShape,
   type ToolContext,
 } from "./helpers.js";
-import { resolveProjectId, resolveTagIds, resolveTaskId } from "./resolve.js";
+import { defaultProjectId, resolveProjectId, resolveTagIds, resolveTaskId } from "./resolve.js";
 
 interface TimeInterval {
   start: string;
@@ -45,7 +45,10 @@ interface TimeEntry {
 /** What goes into a time entry, shared by the create and update tools. */
 const entryShape = {
   description: z.string().optional().describe("What was worked on"),
-  project_id: z.string().optional().describe("Project id"),
+  project_id: z
+    .string()
+    .optional()
+    .describe("Project id. Falls back to CLOCKIFY_PROJECT_ID when the server sets one."),
   project_name: z.string().optional().describe("Project name instead of the id; must be unambiguous"),
   task_id: z.string().optional().describe("Task id"),
   task_name: z.string().optional().describe("Task name instead of the id; needs a project"),
@@ -65,13 +68,22 @@ type EntryArgs = {
   billable?: boolean;
 };
 
-/** Turns the name-or-id arguments into the ids Clockify expects. */
+/**
+ * Turns the name-or-id arguments into the ids Clockify expects.
+ *
+ * `useDefault` applies the configured default project to an entry that names
+ * none — which is what makes a project-scoped deployment log straight into its
+ * project. It is on for the tools that create an entry and off for updates,
+ * where silently moving an existing entry would be the wrong kind of helpful.
+ */
 async function resolveEntryRefs(
   client: ClockifyClient,
   workspaceId: string,
   args: EntryArgs,
+  useDefault = false,
 ): Promise<{ projectId?: string; taskId?: string; tagIds?: string[] }> {
-  const projectId = await resolveProjectId(client, workspaceId, args.project_id, args.project_name);
+  const named = await resolveProjectId(client, workspaceId, args.project_id, args.project_name);
+  const projectId = named ?? (useDefault ? await defaultProjectId(client, workspaceId) : undefined);
   const taskId = await resolveTaskId(client, workspaceId, projectId, args.task_id, args.task_name);
   const tagIds = await resolveTagIds(client, workspaceId, args.tag_ids, args.tag_names);
   return { projectId, taskId, tagIds };
@@ -156,7 +168,7 @@ export function registerTimeEntryTools(ctx: ToolContext): void {
     async (args) => {
       const workspaceId = await client.workspaceId(args.workspace_id);
       const timeZone = await client.timeZone();
-      const refs = await resolveEntryRefs(client, workspaceId, args);
+      const refs = await resolveEntryRefs(client, workspaceId, args, true);
       const start = parseInstant(args.start ?? "now", timeZone);
 
       const entry = await client.post<TimeEntry>(`/workspaces/${workspaceId}/time-entries`, {
@@ -241,7 +253,7 @@ export function registerTimeEntryTools(ctx: ToolContext): void {
         );
       }
 
-      const refs = await resolveEntryRefs(client, workspaceId, args);
+      const refs = await resolveEntryRefs(client, workspaceId, args, true);
       const userId = args.user_id ? await client.userId(args.user_id) : undefined;
       const me = await client.me();
       // Writing for somebody else needs the admin-only, user-scoped endpoint.
@@ -320,7 +332,7 @@ export function registerTimeEntryTools(ctx: ToolContext): void {
             : new Date(start.getTime() + parseDuration(item.duration!) * 1000);
           if (end.getTime() <= start.getTime()) throw new Error("Ends before it starts.");
 
-          const refs = await resolveEntryRefs(client, workspaceId, item);
+          const refs = await resolveEntryRefs(client, workspaceId, item, true);
           const entry = await client.post<TimeEntry>(path, {
             ...compact({
               description: item.description,

@@ -358,6 +358,11 @@
         },
         {
           "@type": "Question",
+          "name": "Can everything be logged to one project automatically?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Set X-Clockify-Project-Id to a project id, or to a project name, and every entry written through that connection lands on it unless the request names a project itself. It is a default rather than a lock: listing and summarising still cover the whole workspace. The id is the 24-character part of the address bar when the project is open in Clockify." }
+        },
+        {
+          "@type": "Question",
           "name": "Can it log time for other people?",
           "acceptedAnswer": { "@type": "Answer", "text": "With an admin key, yes: pass user_id and the entry is written through the admin endpoint. With an ordinary member key Clockify refuses, which is the correct outcome." }
         },
@@ -496,7 +501,9 @@
   https://clockify-mcp.webapace.ink/mcp \
   --header "X-Clockify-Key: YOUR_API_KEY"</pre></div>
           <p class="muted">
-            That is the whole setup; the tools appear immediately. To keep the key out of the config
+            That is the whole setup; the tools appear immediately. Working on one project? Add a
+            second <code>--header "X-Clockify-Project-Id: …"</code> and every hour logged through this
+            connection books itself there. To keep the key out of the config
             file, write <code>--header "X-Clockify-Key: ${CLOCKIFY_API_KEY}"</code> instead and export
             the variable in your shell.
           </p>
@@ -515,12 +522,13 @@
       <span class="c-key">"url"</span>: <span class="c-str">"https://clockify-mcp.webapace.ink/mcp"</span>,
       <span class="c-key">"headers"</span>: {
         <span class="c-key">"X-Clockify-Key"</span>: <span class="c-str">""</span>,
-        <span class="c-key">"X-Clockify-Workspace-Id"</span>: <span class="c-str">""</span>
+        <span class="c-key">"X-Clockify-Workspace-Id"</span>: <span class="c-str">""</span>,
+        <span class="c-key">"X-Clockify-Project-Id"</span>: <span class="c-str">""</span>
       }
     }
   }
 }</pre></div>
-          <p class="muted">Two values, and only the first is required:</p>
+          <p class="muted">Three values, and only the first is required:</p>
           <ul class="plain">
             <li>
               <b><code>X-Clockify-Key</code></b> — the key from step 1. Without it every call is
@@ -531,6 +539,12 @@
               you are currently active in is used, which is right for most people. Fill it in if you
               belong to several and keep ending up in the wrong one; <code>clockify_list_workspaces</code>
               prints the ids.
+            </li>
+            <li>
+              <b><code>X-Clockify-Project-Id</code></b> — optional, and the reason to put this file in a
+              repository: everything logged through this connection lands on that project without
+              anyone naming it. A request that names its own project still wins. A project
+              <i>name</i> works here too, if you prefer reading it.
             </li>
           </ul>
           <p class="muted">
@@ -590,11 +604,41 @@
               <tr><td class="mono">X-Clockify-Key</td><td><span class="req">required</span> Your personal API key</td></tr>
               <tr><td class="mono">X-Clockify-Workspace-Id</td><td>Default workspace. Without it, the one your account is active in</td></tr>
               <tr><td class="mono">X-Clockify-Workspace-Lock</td><td><code>true</code> confines every tool to that workspace and refuses anything wider</td></tr>
+              <tr><td class="mono">X-Clockify-Project-Id</td><td>The project new entries are logged to when the request names none. An id or a project name</td></tr>
               <tr><td class="mono">X-Clockify-Read-Only</td><td><code>true</code> refuses every tool that would change something</td></tr>
               <tr><td class="mono">X-Clockify-Timezone</td><td>IANA zone such as <code>Europe/Zurich</code>, overriding the one on your Clockify profile</td></tr>
               <tr><td class="mono">Authorization: Bearer …</td><td>Accepted instead of <code>X-Clockify-Key</code> by clients that only send bearer tokens</td></tr>
             </tbody>
           </table>
+        </div>
+
+        <h4 style="margin-top:26px">Where to find the workspace and project ids</h4>
+        <p class="muted">
+          Both are 24-character strings, and Clockify puts both in the address bar — you never have to
+          call the API to read them off.
+        </p>
+        <ol class="clicks">
+          <li>
+            <b>Workspace id.</b> Click <b>Settings</b> in the left sidebar. The address becomes
+            <code>app.clockify.me/workspaces/<b>5e8395d5261ba37dee85a378</b>/settings</code> — the part
+            in the middle is the id.
+          </li>
+          <li>
+            <b>Project id.</b> Open <b>Projects</b> and click the project you want. The address becomes
+            <code>app.clockify.me/projects/<b>60f9c8b1a2d4e51f3c7b8a29</b>/…</code> — again, the chunk
+            after <code>/projects/</code>.
+          </li>
+        </ol>
+        <p class="muted">
+          Or connect with the key alone and ask: <q>which workspaces am I in?</q> and
+          <q>find the project called Frontend</q> answer with the ids, ready to paste. Then restart the
+          client — MCP configuration is read at startup, so an edited file changes nothing until you do.
+        </p>
+        <div class="note calm">
+          <b>A name works instead of an id.</b> <code>"X-Clockify-Project-Id": "Velocorner Frontend"</code>
+          is resolved against your workspace on first use. It is easier to read, but a rename in
+          Clockify breaks it, and a name matching several projects is refused rather than guessed —
+          so for a configuration that should keep working, paste the id.
         </div>
       </div>
 
@@ -738,7 +782,8 @@
         <p>
           <code>X-Clockify-Workspace-Id</code> plus <code>X-Clockify-Workspace-Lock: true</code> confines
           every tool to that workspace. Listing the others is refused, and so is a raw API call that
-          points anywhere else.
+          points anywhere else. Add <code>X-Clockify-Project-Id</code> and everything logged through
+          that connection lands on one project as well.
         </p>
       </div>
       <div class="card">
@@ -905,6 +950,17 @@
     </details>
 
     <details>
+      <summary>Can everything be logged to one project automatically?</summary>
+      <p>Yes — that is what <code>X-Clockify-Project-Id</code> is for. Set it to a project id (or a
+      project name) and every entry written through that connection lands there unless the request
+      names a project of its own. Put it in a repository's <code>.mcp.json</code> and the hours from
+      that repository book themselves correctly.</p>
+      <p>It is a default, not a lock: listing and summarising still cover the whole workspace, and
+      editing an existing entry never moves it. To find the id, open the project in Clockify — the
+      address becomes <code>app.clockify.me/projects/<b>60f9c8b1a2d4e51f3c7b8a29</b>/…</code>.</p>
+    </details>
+
+    <details>
       <summary>Can it log time for other people?</summary>
       <p>With an admin key, yes: pass <code>user_id</code> and the entry is written through the admin
       endpoint. With an ordinary member key Clockify refuses, which is the correct outcome.</p>
@@ -947,6 +1003,8 @@
           <tr><td class="mono">No Clockify API key supplied</td><td>The <code>X-Clockify-Key</code> header did not arrive. Some clients drop unknown headers — check the spelling and that it sits in the right block</td></tr>
           <tr><td>Entries land on the wrong day</td><td>Ask <code>clockify_whoami</code> what time zone it thinks you are in. If Clockify has the wrong one, either fix it in your profile or send <code>X-Clockify-Timezone</code></td></tr>
           <tr><td>"matches 3 projects"</td><td>The name was ambiguous, and guessing would have booked hours to the wrong client. Use the exact name, or the id from <code>clockify_find_project</code></td></tr>
+          <tr><td>Entries land without a project</td><td>Nothing named one, and no default is set. Add <code>X-Clockify-Project-Id</code>; <code>clockify_whoami</code> reports the default the server is actually using</td></tr>
+          <tr><td class="mono">The configured default project … could not be used</td><td><code>X-Clockify-Project-Id</code> holds a name that matches no active project in the workspace, or matches several. Use the id from the project's address in Clockify</td></tr>
           <tr><td class="mono">429 Too Many Requests</td><td>Clockify allows about 50 requests a second per key. Ask for a narrower range, or wait a moment</td></tr>
           <tr><td class="mono">Refused: … CLOCKIFY_READ_ONLY</td><td>Working as intended: the tool would change something and read-only mode is on</td></tr>
           <tr><td class="mono">Refused: … CLOCKIFY_WORKSPACE_LOCK</td><td>Working as intended: the request pointed outside the locked workspace</td></tr>

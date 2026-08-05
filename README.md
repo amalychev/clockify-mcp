@@ -39,7 +39,8 @@ Or write the configuration yourself. The same object goes into `.mcp.json` in a 
       "url": "https://clockify-mcp.webapace.ink/mcp",
       "headers": {
         "X-Clockify-Key": "",
-        "X-Clockify-Workspace-Id": ""
+        "X-Clockify-Workspace-Id": "",
+        "X-Clockify-Project-Id": ""
       }
     }
   }
@@ -50,6 +51,10 @@ Or write the configuration yourself. The same object goes into `.mcp.json` in a 
 |---|---|---|
 | `X-Clockify-Key` | your personal API key | the request is refused — this one is required |
 | `X-Clockify-Workspace-Id` | a workspace id from `clockify_list_workspaces` | the workspace the account is active in |
+| `X-Clockify-Project-Id` | the project this connection logs to | every entry needs its own project, or lands without one |
+
+[Where the ids come from](#where-the-ids-come-from) walks through finding all three values in
+Clockify.
 
 `X-Clockify-Workspace-Lock`, `X-Clockify-Read-Only` and `X-Clockify-Timezone` can be added the same
 way; see [Hosted mode](#hosted-mode) for the full header list.
@@ -93,6 +98,39 @@ invoices, approvals and custom fields. Everything else — timers, entries, proj
 people, holidays, time off — works on the free plan, and `clockify_time_summary` produces totals
 without the Reports API by adding up the entries themselves.
 
+### Where the ids come from
+
+The key is the only value that is required. A workspace id and a project id are what turn a generic
+connection into one that logs to the right place without being told every time.
+
+**Workspace id.** Clockify → **Settings** in the left sidebar. The address bar becomes
+`https://app.clockify.me/workspaces/5e8395d5261ba37dee85a378/settings` — the 24-character chunk in
+the middle is the id. From the terminal instead:
+
+```bash
+curl -s -H "X-Api-Key: $CLOCKIFY_API_KEY" https://api.clockify.me/api/v1/workspaces \
+  | jq -r '.[] | "\(.id)  \(.name)"'
+```
+
+**Project id.** Clockify → **Projects** → open the project. The address bar becomes
+`https://app.clockify.me/projects/60f9c8b1a2d4e51f3c7b8a29/…`; again, the 24-character chunk is the
+id. Or list the active projects of a workspace:
+
+```bash
+curl -s -H "X-Api-Key: $CLOCKIFY_API_KEY" \
+  "https://api.clockify.me/api/v1/workspaces/<workspaceId>/projects?archived=false&page-size=200" \
+  | jq -r '.[] | "\(.id)  \(.name)"'
+```
+
+**Or ask the assistant.** With the server already connected on the key alone, `clockify_whoami`
+reports the account, the active workspace and how the server is configured, `clockify_list_workspaces`
+returns every workspace with its id, and `clockify_find_project` searches projects by part of a name.
+Put the values into the configuration and restart the client, which reads it only at startup.
+
+`CLOCKIFY_PROJECT_ID` and `X-Clockify-Project-Id` accept a project **name** as well — `Velocorner
+Frontend` rather than `60f9c8…` — resolved once against the workspace, and refused if it matches
+several projects. A name does not survive a rename, so prefer the id for anything long-lived.
+
 ---
 
 ## Configuration
@@ -104,6 +142,7 @@ In stdio mode everything is configured through environment variables.
 | `CLOCKIFY_API_KEY` | yes | — | Personal API key |
 | `CLOCKIFY_WORKSPACE_ID` | no | active workspace | Default workspace for every tool |
 | `CLOCKIFY_WORKSPACE_LOCK` | no | `false` | `true` — hard isolation inside `CLOCKIFY_WORKSPACE_ID` |
+| `CLOCKIFY_PROJECT_ID` | no | — | Default project for new entries; an id or an unambiguous project name |
 | `CLOCKIFY_READ_ONLY` | no | `false` | `true` — every mutating tool is refused |
 | `CLOCKIFY_TIMEZONE` | no | account setting | IANA zone for wall-clock arguments |
 | `CLOCKIFY_API_URL` | no | `https://api.clockify.me/api/v1` | Main API root; a bare host gets `/api/v1` appended |
@@ -113,7 +152,7 @@ In stdio mode everything is configured through environment variables.
 | `CLOCKIFY_TIMEOUT_MS` | no | `60000` | Per-request timeout |
 
 Aliases that are also read: `CLOCKIFY_KEY` / `CLOCKIFY_TOKEN` for the key, `TZ` for the zone,
-`CLOCKIFY_LOCK_WORKSPACE` for the lock.
+`CLOCKIFY_LOCK_WORKSPACE` for the lock, `CLOCKIFY_DEFAULT_PROJECT` for the project.
 
 ### Connecting a local copy
 
@@ -134,7 +173,8 @@ Or in `.mcp.json`, so the configuration travels with the project:
       "env": {
         "CLOCKIFY_API_KEY": "xxxxxxxx",
         "CLOCKIFY_WORKSPACE_ID": "5e8395d5261ba37dee85a378",
-        "CLOCKIFY_WORKSPACE_LOCK": "true"
+        "CLOCKIFY_WORKSPACE_LOCK": "true",
+        "CLOCKIFY_PROJECT_ID": "60f9c8b1a2d4e51f3c7b8a29"
       }
     }
   }
@@ -197,6 +237,7 @@ state:
 | `X-Clockify-Key` | `CLOCKIFY_API_KEY` | required unless the deployment sets a default; `Authorization: Bearer <key>` is accepted instead |
 | `X-Clockify-Workspace-Id` | `CLOCKIFY_WORKSPACE_ID` | default workspace |
 | `X-Clockify-Workspace-Lock` | `CLOCKIFY_WORKSPACE_LOCK` | `true` locks the session to that workspace |
+| `X-Clockify-Project-Id` | `CLOCKIFY_PROJECT_ID` | default project for new entries; a project name works too |
 | `X-Clockify-Read-Only` | `CLOCKIFY_READ_ONLY` | `true` refuses every mutating tool |
 | `X-Clockify-Timezone` | `CLOCKIFY_TIMEZONE` | IANA zone for wall-clock arguments |
 | `X-Clockify-Url` | `CLOCKIFY_API_URL` | on-premise installations |
@@ -275,10 +316,10 @@ per request.
 
 ---
 
-## Single-workspace isolation
+## Scoping: workspace and project
 
 Most people belong to more than one workspace, and an assistant that wanders into the wrong one
-logs hours against the wrong client. Two levels of confinement:
+logs hours against the wrong client. Two levels of confinement, plus a default project inside them:
 
 **A default workspace.** `CLOCKIFY_WORKSPACE_ID` (or `X-Clockify-Workspace-Id`) is used whenever a
 tool omits `workspace_id`. Other workspaces stay reachable by asking for them explicitly.
@@ -299,6 +340,23 @@ so `61ab…` is out of scope.
 
 Read-only mode is the orthogonal control: `CLOCKIFY_READ_ONLY=true` refuses every tool that writes,
 including non-GET calls through `clockify_api_request`.
+
+### A default project
+
+`CLOCKIFY_PROJECT_ID`, or `X-Clockify-Project-Id` in hosted mode, names the project new time entries
+belong to. `clockify_start_timer`, `clockify_log_time` and `clockify_log_many` use it whenever the
+call itself carries no `project_id` or `project_name` — so a connection set up for one repository
+logs into that repository's project, and nobody has to repeat the name in every request. A project
+given in the call still wins, and `task_name` can then be resolved on its own, because the project it
+belongs to is already known.
+
+It is a default, not a lock. Reading tools are unaffected: `clockify_list_time_entries` and
+`clockify_time_summary` still cover the whole workspace unless a project is asked for, which is what
+makes "what did I do today" answer honestly. `clockify_update_time_entry` ignores it as well — an
+edit to a description would otherwise quietly move the entry to another project.
+
+Alongside `CLOCKIFY_WORKSPACE_LOCK` it gives a per-project connection: the workspace is the only one
+reachable, and everything logged inside it lands on one project by default.
 
 ---
 
@@ -413,5 +471,7 @@ read-only guard and uniform error handling, so the handler only makes the Clocki
 | `429` | Clockify allows about 50 requests a second per key |
 | Entries on the wrong day | check the zone `clockify_whoami` reports; override with `CLOCKIFY_TIMEZONE` |
 | `matches 3 projects` | the name was ambiguous; use the exact name or the id |
+| `The configured default project … could not be used` | `CLOCKIFY_PROJECT_ID` holds a name that matches no live project in the workspace, or several |
+| Entries land without a project | no `CLOCKIFY_PROJECT_ID` is set, or the entry named one that resolved elsewhere; `clockify_whoami` shows the default in use |
 | `Refused: … CLOCKIFY_READ_ONLY` | working as intended |
 | `Refused: … CLOCKIFY_WORKSPACE_LOCK` | working as intended |

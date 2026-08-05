@@ -15,7 +15,8 @@ export function registerCoreTools(ctx: ToolContext): void {
       title: "Who am I",
       description:
         "The account behind the API key: name, email, active workspace, time zone, and how this " +
-        "server is configured (workspace lock, read-only). Start here when anything looks wrong.",
+        "server is configured (workspace lock, default project, read-only). Start here when " +
+        "anything looks wrong.",
       readOnly: true,
     },
     async () => {
@@ -32,6 +33,8 @@ export function registerCoreTools(ctx: ToolContext): void {
           api_url: ctx.config.apiUrl,
           workspace_id: ctx.config.defaultWorkspace ?? null,
           workspace_lock: ctx.config.lockToWorkspace,
+          // What new entries are booked to when the call names no project.
+          default_project: ctx.config.defaultProject ?? null,
           read_only: ctx.config.readOnly,
         },
       });
