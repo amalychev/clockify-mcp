@@ -387,7 +387,7 @@
     </div>
     <h1>Fill in your timesheet<br>by <span class="grad">just saying so</span></h1>
     <p class="lede">
-      "Start a timer on Velocorner." "Log yesterday 09:00 to 17:30, lunch off." "How much did I work
+      "Log yesterday 09:00 to 17:30, lunch off." "How much did I work
       this week?" Your assistant does it in Clockify — <b>in your own words and your own time
       zone</b>, without you opening the app.
     </p>
@@ -635,7 +635,7 @@
           client — MCP configuration is read at startup, so an edited file changes nothing until you do.
         </p>
         <div class="note calm">
-          <b>A name works instead of an id.</b> <code>"X-Clockify-Project-Id": "Velocorner Frontend"</code>
+          <b>A name works instead of an id.</b> <code>"X-Clockify-Project-Id": "Website redesign"</code>
           is resolved against your workspace on first use. It is easier to read, but a rename in
           Clockify breaks it, and a name matching several projects is refused rather than guessed —
           so for a configuration that should keep working, paste the id.
@@ -674,7 +674,7 @@
 
     <h3>While you work</h3>
     <div class="prompts">
-      <div class="prompt"><q>Start a timer on Velocorner, "refactoring the checkout"</q><span class="uses">clockify_start_timer</span></div>
+      <div class="prompt"><q>Start a timer for "refactoring the checkout"</q><span class="uses">clockify_start_timer</span></div>
       <div class="prompt"><q>What am I tracking right now, and for how long?</q><span class="uses">clockify_current_timer</span></div>
       <div class="prompt"><q>Stop the timer</q><span class="uses">clockify_stop_timer</span></div>
     </div>
@@ -682,7 +682,7 @@
     <h3>Filling in what you forgot</h3>
     <div class="prompts">
       <div class="prompt"><q>Log two and a half hours on the API migration from 14:00 today</q><span class="uses">clockify_log_time</span></div>
-      <div class="prompt"><q>Yesterday I worked 09:00–12:30 and 13:30–17:30 on Velocorner, split it into sensible tasks</q><span class="uses">clockify_log_many</span></div>
+      <div class="prompt"><q>Yesterday I worked 09:00–12:30 and 13:30–17:30, split it into sensible tasks</q><span class="uses">clockify_log_many</span></div>
       <div class="prompt"><q>Take my git commits from Monday and write them up as a workday</q><span class="uses">clockify_log_many</span></div>
       <div class="prompt"><q>That last entry should have been 45 minutes, not an hour and a half</q><span class="uses">clockify_update_time_entry</span></div>
     </div>
@@ -746,8 +746,8 @@
 
     <h3>Names instead of ids</h3>
     <p class="muted">
-      Every tool that takes a project, a task or a tag also takes its name. "Log an hour on Velocorner"
-      resolves <i>Velocorner</i> to its id for you. If the name matches more than one thing, you get
+      Every tool that takes a project, a task or a tag also takes its name. "Log an hour on the
+      website redesign" resolves <i>Website redesign</i> to its id for you. If the name matches more than one thing, you get
       the candidates back rather than a silent guess at the wrong project.
     </p>
 

@@ -1,7 +1,7 @@
 import type { ClockifyClient } from "../clockify-client.js";
 
 /**
- * Name-to-id lookups. People say "log two hours to Velocorner Frontend", not
+ * Name-to-id lookups. People say "log two hours to the website redesign", not
  * "log two hours to 5f2a…", so every tool that takes an id also takes a name and
  * resolves it here. An ambiguous name is an error listing the candidates rather
  * than a silent guess at the wrong project.

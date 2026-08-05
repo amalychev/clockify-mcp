@@ -127,8 +127,8 @@ reports the account, the active workspace and how the server is configured, `clo
 returns every workspace with its id, and `clockify_find_project` searches projects by part of a name.
 Put the values into the configuration and restart the client, which reads it only at startup.
 
-`CLOCKIFY_PROJECT_ID` and `X-Clockify-Project-Id` accept a project **name** as well — `Velocorner
-Frontend` rather than `60f9c8…` — resolved once against the workspace, and refused if it matches
+`CLOCKIFY_PROJECT_ID` and `X-Clockify-Project-Id` accept a project **name** as well — `Website
+redesign` rather than `60f9c8…` — resolved once against the workspace, and refused if it matches
 several projects. A name does not survive a rename, so prefer the id for anything long-lived.
 
 ---
