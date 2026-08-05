@@ -1,0 +1,15 @@
+{
+  "name": "Clockify MCP — track time by talking to your AI",
+  "short_name": "Clockify MCP",
+  "description": "Hosted Model Context Protocol server for Clockify: 61 tools for timers, time entries, projects, reports and time off, with local-timezone aware logging.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "minimal-ui",
+  "background_color": "#0e1116",
+  "theme_color": "#37c2ff",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}

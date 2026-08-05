@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+      MCP_TRANSPORT: http
+      PORT: 8080
+      HOST: 0.0.0.0
+    expose:
+      - "8080"
+    networks:
+      default:
+      assistant_default:
+        aliases:
+          - clockify-mcp-app
+
+networks:
+  assistant_default:
+    external: true

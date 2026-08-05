@@ -1,0 +1,57 @@
+<!doctype html>
+<!--
+  Source of assets/og-image.png — the 1200x630 preview shown when the landing
+  page is shared. Rendered by scripts/build-assets.mjs; not served to anyone.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    display: flex; flex-direction: column; justify-content: center; gap: 30px;
+    padding: 0 76px;
+    background: #0e1116;
+    background-image: radial-gradient(90% 120% at 8% -10%, rgba(55, 194, 255, .22), transparent 62%);
+    color: #e6e9ee;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .top { display: flex; align-items: center; gap: 22px; }
+  .top img { width: 78px; height: 78px; }
+  .badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 20px; letter-spacing: .1em; text-transform: uppercase; color: #37c2ff;
+    border: 1px solid rgba(55, 194, 255, .4); border-radius: 100px; padding: 8px 20px;
+  }
+  h1 { font-size: 82px; line-height: 1.04; letter-spacing: -.03em; font-weight: 680; }
+  .grad {
+    background: linear-gradient(92deg, #37c2ff, #0b74d8);
+    -webkit-background-clip: text; color: transparent;
+  }
+  p { font-size: 30px; line-height: 1.4; color: #9aa4b2; max-width: 32ch; }
+  .foot { display: flex; align-items: center; gap: 34px; margin-top: 8px; }
+  .foot code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 26px; color: #e6e9ee;
+    background: #0b0e13; border: 1px solid #262e38; border-radius: 10px; padding: 12px 20px;
+  }
+  .stat { font-size: 26px; color: #9aa4b2; }
+  .stat b { color: #e6e9ee; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <img src="favicon.svg" alt="">
+    <span class="badge">Model Context Protocol</span>
+  </div>
+  <h1>Track time by<br>simply <span class="grad">saying so</span></h1>
+  <p>"Log yesterday 09:00 to 17:30 on Velocorner" — and it lands in Clockify.</p>
+  <div class="foot">
+    <code>clockify-mcp.webapace.ink/mcp</code>
+    <span class="stat"><b>61</b> tools</span>
+    <span class="stat"><b>~2 min</b> setup</span>
+  </div>
+</body>
+</html>

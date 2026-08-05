@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clockify MCP Server — Track Time by Talking to Your AI</title>
+<meta name="description" content="Hosted MCP server for Clockify. Let Claude or Cursor start timers, log yesterday's work in plain words and total your week — 61 tools, nothing to install.">
+<link rel="canonical" href="https://clockify-mcp.webapace.ink/">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<meta name="author" content="Clockify MCP">
+<meta name="application-name" content="Clockify MCP">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+
+<!-- Icons -->
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- Link previews (Open Graph and X/Twitter) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Clockify MCP">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://clockify-mcp.webapace.ink/">
+<meta property="og:title" content="Clockify MCP Server — Track Time by Talking to Your AI">
+<meta property="og:description" content="Start and stop timers, log a whole day from your notes, and total your week — in plain words, in your own time zone. 61 tools, nothing to install.">
+<meta property="og:image" content="https://clockify-mcp.webapace.ink/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Clockify MCP — track time by simply saying so. 61 tools, about two minutes of setup.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Clockify MCP Server — Track Time by Talking to Your AI">
+<meta name="twitter:description" content="Start and stop timers, log a whole day from your notes, and total your week — in plain words, in your own time zone.">
+<meta name="twitter:image" content="https://clockify-mcp.webapace.ink/og-image.png">
+<meta name="twitter:image:alt" content="Clockify MCP — track time by simply saying so.">
+<style>
+  :root {
+    --bg: #0e1116;
+    --bg-soft: #151a21;
+    --bg-card: #171d25;
+    --line: #262e38;
+    --line-soft: #1e252e;
+    --text: #e6e9ee;
+    --muted: #9aa4b2;
+    --accent: #37c2ff;
+    --accent-2: #0b74d8;
+    --code-bg: #0b0e13;
+    --code-text: #dfe5ee;
+    --ok: #4ec9a5;
+    --warn: #e5c07b;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ffffff; --bg-soft: #f5f7f9; --bg-card: #ffffff; --line: #e2e7ec; --line-soft: #edf0f3;
+      --text: #141a21; --muted: #58626e; --accent: #0b74d8; --accent-2: #0959a8;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--sans); font-size: 16px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+  /*
+   * Grid and flex children default to min-width: auto, so one wide code block
+   * would stretch its whole track and push the page past the viewport. Every
+   * container that can hold code or a table opts out of that.
+   */
+  .steps, .grid, .prompts, .flow, .tabs,
+  .step, .card, .prompt, .flow-item, .panel, .tblwrap, .note, details { min-width: 0; }
+  p, li, td, th, summary, h1, h2, h3, h4 { overflow-wrap: break-word; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+
+  /* ---------- hero ---------- */
+  header {
+    border-bottom: 1px solid var(--line);
+    background: radial-gradient(120% 100% at 10% 0%, rgba(55,194,255,.13), transparent 60%);
+  }
+  /* padding-block only: the horizontal padding comes from .wrap and must survive. */
+  .hero { padding-block: 74px 58px; }
+  .brand { display: flex; align-items: center; gap: 13px; flex-wrap: wrap; }
+  .brand img { border-radius: 8px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono);
+    font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+    border: 1px solid rgba(55,194,255,.35); border-radius: 100px; padding: 5px 12px;
+  }
+  h1 {
+    font-size: clamp(34px, 5.6vw, 54px); line-height: 1.08; margin: 22px 0 0;
+    letter-spacing: -.025em; font-weight: 680;
+  }
+  h1 .grad {
+    background: linear-gradient(92deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lede { font-size: 19px; color: var(--muted); max-width: 64ch; margin: 20px 0 0; }
+  .stats { display: flex; flex-wrap: wrap; gap: 38px; margin-top: 38px; }
+  .stat b { display: block; font-size: 28px; font-family: var(--mono); letter-spacing: -.02em; }
+  .stat span { font-size: 13px; color: var(--muted); }
+  .endpoint {
+    display: inline-flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 34px;
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px;
+  }
+  .endpoint-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  }
+  .endpoint code { font-size: 15px; color: var(--accent); overflow-wrap: anywhere; }
+
+  /* ---------- nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; gap: 24px; overflow-x: auto; padding-top: 13px; padding-bottom: 13px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 14px; white-space: nowrap; }
+  nav a:hover { color: var(--accent); }
+
+  /* ---------- sections ---------- */
+  section { padding: 60px 0; border-bottom: 1px solid var(--line); }
+  .kicker {
+    font-size: 12.5px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .12em;
+    color: var(--accent); margin: 0 0 8px; font-weight: 600;
+  }
+  h2 { font-size: 28px; margin: 0 0 14px; letter-spacing: -.02em; font-weight: 640; }
+  h3 { font-size: 18.5px; margin: 36px 0 12px; font-weight: 620; }
+  h4 { font-size: 15.5px; margin: 0 0 8px; font-weight: 620; }
+  p { max-width: 76ch; }
+  .muted { color: var(--muted); }
+  .lead { font-size: 17px; color: var(--muted); margin-top: 0; }
+
+  /* ---------- code ---------- */
+  .codewrap { position: relative; min-width: 0; max-width: 100%; }
+  pre {
+    background: var(--code-bg); color: var(--code-text); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px 18px; overflow-x: auto; max-width: 100%;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.7; margin: 14px 0;
+  }
+  code { font-family: var(--mono); font-size: .92em; }
+  :not(pre) > code {
+    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px;
+    /* Identifiers like CLOCKIFY_WORKSPACE_LOCK must not widen the page. */
+    overflow-wrap: anywhere;
+  }
+  .copy {
+    position: absolute; top: 22px; right: 10px; font-family: var(--mono); font-size: 11px;
+    color: var(--muted); background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: 6px; padding: 3px 9px; cursor: pointer; opacity: 0; transition: opacity .15s;
+  }
+  .codewrap:hover .copy { opacity: 1; }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+  .c-key { color: #79b8ff; } .c-str { color: #9ecbff; } .c-cm { color: #6b7684; } .c-num { color: var(--warn); }
+
+  /* ---------- steps ---------- */
+  .steps { counter-reset: s; display: grid; gap: 30px; margin-top: 26px; }
+  .step { position: relative; padding-left: 54px; }
+  .step::before {
+    counter-increment: s; content: counter(s);
+    position: absolute; left: 0; top: -2px; width: 34px; height: 34px; border-radius: 10px;
+    display: grid; place-items: center; font-family: var(--mono); font-size: 14.5px;
+    background: var(--bg-soft); border: 1px solid var(--line); color: var(--accent);
+  }
+  .step > h3 { margin: 2px 0 8px; font-size: 18px; }
+  ol.clicks, ul.plain { color: var(--muted); padding-left: 20px; max-width: 76ch; }
+  ol.clicks li, ul.plain li { margin: 6px 0; }
+
+  /* ---------- tabs ---------- */
+  .tabs { display: flex; gap: 6px; margin: 20px 0 0; flex-wrap: wrap; }
+  .tab {
+    font-size: 13.5px; font-family: var(--sans); color: var(--muted); background: transparent;
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px; cursor: pointer;
+  }
+  .tab[aria-selected="true"] { color: var(--accent); border-color: var(--accent); background: rgba(55,194,255,.08); }
+  .panel[hidden] { display: none; }
+
+  /* ---------- tables ---------- */
+  .tblwrap { overflow-x: auto; margin: 18px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; border-bottom-color: var(--line); }
+  td.mono { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+  .req { color: var(--accent); font-family: var(--mono); font-size: 12px; }
+
+  /* ---------- cards ---------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 22px; }
+  .card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .card p { margin: 0; font-size: 14.5px; color: var(--muted); }
+  .card .n { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+
+  .note {
+    border-left: 3px solid var(--accent); background: var(--bg-soft);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 22px 0; font-size: 15px; max-width: 80ch;
+  }
+  .note b { color: var(--accent); }
+  .note.calm { border-left-color: var(--ok); }
+  .note.calm b { color: var(--ok); }
+
+  /* ---------- prompt examples ---------- */
+  .prompts { display: grid; gap: 10px; margin-top: 18px; }
+  .prompt {
+    display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 13px 16px;
+  }
+  .prompt q { font-size: 15px; }
+  .prompt q::before { content: "“"; } .prompt q::after { content: "”"; }
+  .prompt .uses { font-family: var(--mono); font-size: 11.5px; color: var(--muted); text-align: right; }
+  @media (max-width: 700px) { .prompt { grid-template-columns: 1fr; } .prompt .uses { text-align: left; } }
+
+  /* ---------- tool explorer ---------- */
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 22px 0 8px; }
+  #search {
+    flex: 1 1 240px; min-width: 200px; background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: 9px; padding: 9px 13px; color: var(--text); font-family: var(--mono); font-size: 13.5px;
+  }
+  #search:focus { outline: none; border-color: var(--accent); }
+  .chip {
+    font-size: 13px; color: var(--muted); background: transparent; border: 1px solid var(--line);
+    border-radius: 100px; padding: 5px 13px; cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: rgba(55,194,255,.08); }
+  #count { font-size: 13px; color: var(--muted); font-family: var(--mono); }
+  .rw {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; padding: 2px 7px;
+    border-radius: 5px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
+  }
+  .rw.w { color: var(--warn); border-color: rgba(229,192,123,.4); }
+  .rw.r { color: var(--ok); border-color: rgba(78,201,165,.35); }
+  tr[hidden] { display: none; }
+
+  /* ---------- faq ---------- */
+  details {
+    border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px;
+    margin: 10px 0; background: var(--bg-card);
+  }
+  details[open] { border-color: rgba(55,194,255,.4); }
+  summary { cursor: pointer; font-weight: 600; font-size: 15.5px; }
+  summary::marker { color: var(--accent); }
+  details p { margin: 12px 0 0; color: var(--muted); font-size: 14.5px; }
+
+  footer { padding: 42px 0 66px; color: var(--muted); font-size: 14px; }
+
+  /* ---------- narrow screens ---------- */
+  @media (max-width: 560px) {
+    body { font-size: 15.5px; }
+    .wrap { padding: 0 16px; }
+    .hero { padding-block: 52px 44px; }
+    .lede { font-size: 17px; }
+    .stats { gap: 26px; margin-top: 30px; }
+    .stat b { font-size: 24px; }
+    .endpoint { display: flex; width: 100%; padding: 12px 14px; gap: 6px; align-items: flex-start; flex-direction: column; }
+    section { padding: 46px 0; }
+    h2 { font-size: 24px; }
+    .steps { gap: 26px; }
+    .step { padding-left: 0; padding-top: 44px; }
+    .step::before { top: 0; }
+    pre { font-size: 12.5px; padding: 14px 14px; }
+    /* No hover on touch: show the button, and above the block so it covers no code. */
+    .copy { position: static; display: block; margin: 0 0 -4px auto; opacity: 1; }
+    /*
+     * Tables stack instead of scrolling sideways: the identifier and its default
+     * share a line, the explanation gets the full width underneath.
+     */
+    /* display:block as well, or the table keeps sizing itself to its widest cell. */
+    .tblwrap table { display: block; width: 100%; font-size: 14px; }
+    .tblwrap thead { display: none; }
+    /* tbody stays a row-group otherwise, and rebuilds the anonymous table box. */
+    .tblwrap tbody { display: block; width: 100%; }
+    .tblwrap tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .tblwrap tr:last-child { border-bottom: none; }
+    .tblwrap td { display: inline-block; border: none; padding: 0 10px 0 0; white-space: normal; }
+    .tblwrap td:first-child { color: var(--text); font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
+    .tblwrap td:last-child { display: block; color: var(--muted); padding: 5px 0 0; }
+    .tblwrap tr[hidden] { display: none; }
+    .card { padding: 17px; }
+    details { padding: 13px 15px; }
+    .toolbar { gap: 8px; }
+    #search { flex-basis: 100%; }
+  }
+</style>
+
+<!-- Structured data: what the thing is, and the questions answered below. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://clockify-mcp.webapace.ink/#app",
+      "name": "Clockify MCP",
+      "alternateName": "Clockify MCP Server",
+      "url": "https://clockify-mcp.webapace.ink/",
+      "image": "https://clockify-mcp.webapace.ink/og-image.png",
+      "applicationCategory": "DeveloperApplication",
+      "applicationSubCategory": "Model Context Protocol server",
+      "operatingSystem": "Any",
+      "description": "Hosted Model Context Protocol server that connects an AI assistant to Clockify. 61 tools cover timers, time entries, projects, tasks, tags, people, reports and time off, and every time can be given as local wall clock — \"yesterday 09:00 for two hours\" lands correctly in the account's own zone.",
+      "softwareHelp": "https://clockify-mcp.webapace.ink/#setup",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": [
+        "61 Clockify tools over the Model Context Protocol",
+        "Start, stop and inspect the running timer",
+        "Log finished work in plain words, resolved in the account's time zone",
+        "Write a whole workday in one call",
+        "Totals per project, day or tag without the paid Reports API",
+        "Read-only mode and a hard lock to a single workspace"
+      ],
+      "codeRepository": "https://github.com/amalychev/clockify-mcp"
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://clockify-mcp.webapace.ink/#website",
+      "url": "https://clockify-mcp.webapace.ink/",
+      "name": "Clockify MCP",
+      "description": "Setup guide and tool reference for the Clockify Model Context Protocol server.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://clockify-mcp.webapace.ink/#faq",
+      "isPartOf": { "@id": "https://clockify-mcp.webapace.ink/#website" },
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Do I need a paid Clockify plan?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Timers, time entries, projects, tasks, tags, people and time off all work on the free plan, and clockify_time_summary totals your time by adding up the entries themselves. Only the Reports API, expenses, invoices, approvals and custom fields are paid features; those tools return a 403 that says so." }
+        },
+        {
+          "@type": "Question",
+          "name": "Which time zone are my hours logged in?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The one set on your Clockify profile, which clockify_whoami reports. Say \"09:00\" and it means nine in the morning where you are. Send X-Clockify-Timezone with an IANA name such as Europe/Zurich to override it, or give a full ISO instant to bypass the question entirely." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can it overwrite or delete my existing time entries?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Only if you ask. Deleting requires an explicit confirm flag, and sending X-Clockify-Read-Only: true refuses every tool that changes anything, which makes the connection safe for reporting and review." }
+        },
+        {
+          "@type": "Question",
+          "name": "Where does my API key go?",
+          "acceptedAnswer": { "@type": "Answer", "text": "It travels as a header with each request and is used to call Clockify. The service keeps no accounts, no database and writes nothing to disk. If your policy forbids credentials passing through someone else's host, run the container yourself — it is the same code." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I keep the assistant inside one workspace?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Set X-Clockify-Workspace-Id to the workspace and X-Clockify-Workspace-Lock to true. Every tool is then confined to it, listing other workspaces is refused, and even the raw API escape hatch has to address that workspace." }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I have to look up project ids?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Every tool that takes a project, task or tag also accepts its name. An ambiguous name is reported with the candidates instead of being guessed at." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can it log time for other people?",
+          "acceptedAnswer": { "@type": "Answer", "text": "With an admin key, yes: pass user_id and the entry is written through the admin endpoint. With an ordinary member key Clockify refuses, which is the correct outcome." }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens if I ask for a day that is already approved?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Clockify locks approved and archived periods, and the API refuses to write into them. The tool passes that refusal straight through rather than pretending the entry was created." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<header>
+  <div class="wrap hero">
+    <div class="brand">
+      <img src="/favicon.svg" width="36" height="36" alt="Clockify MCP logo" decoding="async">
+      <span class="badge">Model Context Protocol server</span>
+    </div>
+    <h1>Fill in your timesheet<br>by <span class="grad">just saying so</span></h1>
+    <p class="lede">
+      "Start a timer on Velocorner." "Log yesterday 09:00 to 17:30, lunch off." "How much did I work
+      this week?" Your assistant does it in Clockify — <b>in your own words and your own time
+      zone</b>, without you opening the app.
+    </p>
+    <div class="stats">
+      <div class="stat"><b>61</b><span>tools</span></div>
+      <div class="stat"><b>0</b><span>things to install</span></div>
+      <div class="stat"><b>~2 min</b><span>setup time</span></div>
+    </div>
+    <div class="endpoint">
+      <span class="endpoint-label">Endpoint</span>
+      <code>https://clockify-mcp.webapace.ink/mcp</code>
+    </div>
+  </div>
+</header>
+
+<nav aria-label="Sections of this page">
+  <div class="wrap">
+    <a href="#what">What is this</a>
+    <a href="#setup">Setup</a>
+    <a href="#verify">Verify</a>
+    <a href="#use">Examples</a>
+    <a href="#time">Times &amp; zones</a>
+    <a href="#safety">Safety</a>
+    <a href="#tools">All 61 tools</a>
+    <a href="#faq">FAQ</a>
+    <a href="#trouble">Troubleshooting</a>
+    <a href="#selfhost">Self-hosting</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ============================================================ WHAT -->
+<section id="what">
+  <div class="wrap">
+    <p class="kicker">Start here</p>
+    <h2>What this is, in plain words</h2>
+    <p class="lead">
+      Clockify is where your hours live. An AI assistant on its own cannot reach it — no login, no
+      idea what your projects are called. This service is the bridge, and it is already running, so
+      there is nothing to install.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="n">01</div>
+        <h4>You point your assistant at one URL</h4>
+        <p>A single command adds <code>clockify-mcp.webapace.ink/mcp</code> as a tool provider. No download, no build, no Node.js.</p>
+      </div>
+      <div class="card">
+        <div class="n">02</div>
+        <h4>You paste your Clockify API key</h4>
+        <p>It travels as one header with each request. The service holds no accounts and stores nothing between calls.</p>
+      </div>
+      <div class="card">
+        <div class="n">03</div>
+        <h4>Your timesheet becomes conversation</h4>
+        <p>"Log two hours on the migration, starting at 14:00" — and it is in Clockify, on the right day, in the right zone.</p>
+      </div>
+    </div>
+
+    <h3>What you need before you start</h3>
+    <ul class="plain">
+      <li><b>A Clockify account</b> — the free plan is enough for everything except reports, expenses, invoices and approvals.</li>
+      <li><b>Your personal API key</b>. Getting it takes thirty seconds and is step 1 below.</li>
+      <li><b>An assistant that speaks MCP</b> — Claude Code, Claude Desktop, Cursor and others.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ SETUP -->
+<section id="setup">
+  <div class="wrap">
+    <p class="kicker">Setup</p>
+    <h2>Two steps, about two minutes</h2>
+
+    <div class="steps">
+
+      <div class="step">
+        <h3>Copy your Clockify API key</h3>
+        <p class="muted">This is the key the server uses to act in Clockify on your behalf.</p>
+        <ol class="clicks">
+          <li>Open <a href="https://app.clockify.me" rel="noopener">app.clockify.me</a> and sign in.</li>
+          <li>Click your avatar in the top-right corner → <b>Profile settings</b>.</li>
+          <li>Scroll to the very bottom, to the <b>API</b> section.</li>
+          <li>Click <b>Generate</b> if there is no key yet, then copy the value. It is a long string of letters and digits.</li>
+        </ol>
+        <div class="note">
+          <b>The key is you.</b> It carries every permission your account has in every workspace you
+          belong to. Treat it like a password: never commit it to a repository, and regenerate it in
+          that same screen if it leaks — the old one stops working immediately.
+        </div>
+      </div>
+
+      <div class="step">
+        <h3>Connect your assistant</h3>
+        <p class="muted">
+          Pick the tool you use. One value is yours to fill in: the key from the previous step.
+        </p>
+
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" aria-selected="true" data-panel="p-cc">Claude Code</button>
+          <button class="tab" role="tab" aria-selected="false" data-panel="p-mcp">.mcp.json (any project)</button>
+          <button class="tab" role="tab" aria-selected="false" data-panel="p-desk">Claude Desktop</button>
+          <button class="tab" role="tab" aria-selected="false" data-panel="p-cursor">Cursor</button>
+        </div>
+
+        <div class="panel" id="p-cc">
+          <p class="muted">One command in the terminal:</p>
+          <div class="codewrap"><button class="copy">copy</button><pre>claude mcp add --transport http clockify \
+  https://clockify-mcp.webapace.ink/mcp \
+  --header "X-Clockify-Key: YOUR_API_KEY"</pre></div>
+          <p class="muted">
+            That is the whole setup; the tools appear immediately. To keep the key out of the config
+            file, write <code>--header "X-Clockify-Key: ${CLOCKIFY_API_KEY}"</code> instead and export
+            the variable in your shell.
+          </p>
+        </div>
+
+        <div class="panel" id="p-mcp" hidden>
+          <p class="muted">
+            Prefer to write the configuration by hand? Create a file named <code>.mcp.json</code> in the
+            root of the repository you work in — everyone who opens that repository gets the same setup.
+            Copy this and fill in the blanks:
+          </p>
+          <div class="codewrap"><button class="copy">copy</button><pre>{
+  <span class="c-key">"mcpServers"</span>: {
+    <span class="c-key">"clockify"</span>: {
+      <span class="c-key">"type"</span>: <span class="c-str">"http"</span>,
+      <span class="c-key">"url"</span>: <span class="c-str">"https://clockify-mcp.webapace.ink/mcp"</span>,
+      <span class="c-key">"headers"</span>: {
+        <span class="c-key">"X-Clockify-Key"</span>: <span class="c-str">""</span>,
+        <span class="c-key">"X-Clockify-Workspace-Id"</span>: <span class="c-str">""</span>
+      }
+    }
+  }
+}</pre></div>
+          <p class="muted">Two values, and only the first is required:</p>
+          <ul class="plain">
+            <li>
+              <b><code>X-Clockify-Key</code></b> — the key from step 1. Without it every call is
+              refused with <i>No Clockify API key supplied</i>.
+            </li>
+            <li>
+              <b><code>X-Clockify-Workspace-Id</code></b> — optional. Leave it empty and the workspace
+              you are currently active in is used, which is right for most people. Fill it in if you
+              belong to several and keep ending up in the wrong one; <code>clockify_list_workspaces</code>
+              prints the ids.
+            </li>
+          </ul>
+          <p class="muted">
+            The same object works anywhere your client keeps MCP servers — the tabs on either side of
+            this one are just different file names. Add <code>"X-Clockify-Workspace-Lock": "true"</code>
+            to confine the assistant to that one workspace, or
+            <code>"X-Clockify-Read-Only": "true"</code> to forbid every change; both are explained
+            under <a href="#safety">Safety</a>.
+          </p>
+          <div class="note calm">
+            <b>Do not commit a real key.</b> Keep <code>.mcp.json</code> out of version control, or
+            write <code>"X-Clockify-Key": "${CLOCKIFY_API_KEY}"</code> — Claude Code and Cursor
+            substitute environment variables, so the file stays shareable and the secret stays in your
+            shell.
+          </div>
+        </div>
+
+        <div class="panel" id="p-desk" hidden>
+          <p class="muted">
+            Open <b>Settings → Developer → Edit config</b>, which opens
+            <code>claude_desktop_config.json</code>, and add:
+          </p>
+          <div class="codewrap"><button class="copy">copy</button><pre>{
+  <span class="c-key">"mcpServers"</span>: {
+    <span class="c-key">"clockify"</span>: {
+      <span class="c-key">"type"</span>: <span class="c-str">"http"</span>,
+      <span class="c-key">"url"</span>: <span class="c-str">"https://clockify-mcp.webapace.ink/mcp"</span>,
+      <span class="c-key">"headers"</span>: {
+        <span class="c-key">"X-Clockify-Key"</span>: <span class="c-str">"YOUR_API_KEY"</span>
+      }
+    }
+  }
+}</pre></div>
+          <p class="muted">Save the file and restart the app completely (quit, not just close the window).</p>
+        </div>
+
+        <div class="panel" id="p-cursor" hidden>
+          <p class="muted">Create <code>.cursor/mcp.json</code> in your project with the same shape:</p>
+          <div class="codewrap"><button class="copy">copy</button><pre>{
+  <span class="c-key">"mcpServers"</span>: {
+    <span class="c-key">"clockify"</span>: {
+      <span class="c-key">"url"</span>: <span class="c-str">"https://clockify-mcp.webapace.ink/mcp"</span>,
+      <span class="c-key">"headers"</span>: {
+        <span class="c-key">"X-Clockify-Key"</span>: <span class="c-str">"YOUR_API_KEY"</span>
+      }
+    }
+  }
+}</pre></div>
+        </div>
+
+        <h4 style="margin-top:26px">Optional headers</h4>
+        <p class="muted">Everything below has a sensible default; add them only if you want the behaviour.</p>
+        <div class="tblwrap">
+          <table>
+            <thead><tr><th>Header</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">X-Clockify-Key</td><td><span class="req">required</span> Your personal API key</td></tr>
+              <tr><td class="mono">X-Clockify-Workspace-Id</td><td>Default workspace. Without it, the one your account is active in</td></tr>
+              <tr><td class="mono">X-Clockify-Workspace-Lock</td><td><code>true</code> confines every tool to that workspace and refuses anything wider</td></tr>
+              <tr><td class="mono">X-Clockify-Read-Only</td><td><code>true</code> refuses every tool that would change something</td></tr>
+              <tr><td class="mono">X-Clockify-Timezone</td><td>IANA zone such as <code>Europe/Zurich</code>, overriding the one on your Clockify profile</td></tr>
+              <tr><td class="mono">Authorization: Bearer …</td><td>Accepted instead of <code>X-Clockify-Key</code> by clients that only send bearer tokens</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ VERIFY -->
+<section id="verify">
+  <div class="wrap">
+    <p class="kicker">Verify</p>
+    <h2>Check that it works</h2>
+    <p class="lead">Ask your assistant one question. If it answers, everything is wired up.</p>
+    <div class="prompts">
+      <div class="prompt"><q>Who am I in Clockify?</q><span class="uses">clockify_whoami</span></div>
+    </div>
+    <p class="muted">
+      You should get your name, your email, the workspace you are active in and your time zone. That
+      last one matters: every "09:00" you say later is read in that zone.
+    </p>
+    <p class="muted">To check the service itself rather than your configuration:</p>
+    <div class="codewrap"><button class="copy">copy</button><pre>curl https://clockify-mcp.webapace.ink/health</pre></div>
+    <p class="muted">It answers <code>{"status":"ok"}</code> when the endpoint is up.</p>
+  </div>
+</section>
+
+<!-- ============================================================ USE -->
+<section id="use">
+  <div class="wrap">
+    <p class="kicker">Everyday use</p>
+    <h2>Things to ask for</h2>
+    <p class="lead">Plain sentences. The assistant picks the tool; you never type a tool name.</p>
+
+    <h3>While you work</h3>
+    <div class="prompts">
+      <div class="prompt"><q>Start a timer on Velocorner, "refactoring the checkout"</q><span class="uses">clockify_start_timer</span></div>
+      <div class="prompt"><q>What am I tracking right now, and for how long?</q><span class="uses">clockify_current_timer</span></div>
+      <div class="prompt"><q>Stop the timer</q><span class="uses">clockify_stop_timer</span></div>
+    </div>
+
+    <h3>Filling in what you forgot</h3>
+    <div class="prompts">
+      <div class="prompt"><q>Log two and a half hours on the API migration from 14:00 today</q><span class="uses">clockify_log_time</span></div>
+      <div class="prompt"><q>Yesterday I worked 09:00–12:30 and 13:30–17:30 on Velocorner, split it into sensible tasks</q><span class="uses">clockify_log_many</span></div>
+      <div class="prompt"><q>Take my git commits from Monday and write them up as a workday</q><span class="uses">clockify_log_many</span></div>
+      <div class="prompt"><q>That last entry should have been 45 minutes, not an hour and a half</q><span class="uses">clockify_update_time_entry</span></div>
+    </div>
+
+    <h3>Looking back</h3>
+    <div class="prompts">
+      <div class="prompt"><q>How much did I work this week, per project?</q><span class="uses">clockify_time_summary</span></div>
+      <div class="prompt"><q>Show me everything I tracked yesterday</q><span class="uses">clockify_list_time_entries</span></div>
+      <div class="prompt"><q>Did I hit 7.5 hours every day last week?</q><span class="uses">clockify_time_summary</span></div>
+      <div class="prompt"><q>Which client got most of my June?</q><span class="uses">clockify_summary_report</span></div>
+    </div>
+
+    <h3>Keeping the workspace tidy</h3>
+    <div class="prompts">
+      <div class="prompt"><q>Create a project called "Website redesign" for client Acme</q><span class="uses">clockify_create_project</span></div>
+      <div class="prompt"><q>Archive every project we have not tracked against since March</q><span class="uses">clockify_list_projects → clockify_update_project</span></div>
+      <div class="prompt"><q>How many vacation days do I have left?</q><span class="uses">clockify_time_off_balance</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ TIME -->
+<section id="time">
+  <div class="wrap">
+    <p class="kicker">The part that usually goes wrong</p>
+    <h2>Your words, your clock</h2>
+    <p class="lead">
+      Clockify stores everything in UTC. People describe work in local time. Getting that conversion
+      wrong is how entries end up on the wrong day — so this server does it properly, once, in the
+      one place it belongs.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <h4>It uses your zone, not the server's</h4>
+        <p>The zone comes from your Clockify profile. "09:00" means nine in the morning where you are, no matter where this service runs.</p>
+      </div>
+      <div class="card">
+        <h4>Daylight saving is handled</h4>
+        <p>The offset is resolved for that specific date, so an entry on the night the clocks change lands at the wall-clock time you asked for.</p>
+      </div>
+      <div class="card">
+        <h4>Say it however you like</h4>
+        <p><code>09:00</code>, <code>2026-08-05 09:00</code>, <code>yesterday</code>, <code>now</code>, or a full ISO instant when you want to be exact.</p>
+      </div>
+    </div>
+
+    <h3>Durations, the way people say them</h3>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>You write</th><th>It means</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">2h30m</td><td>Two hours thirty minutes</td></tr>
+          <tr><td class="mono">1.5h</td><td>Ninety minutes</td></tr>
+          <tr><td class="mono">90m</td><td>Ninety minutes</td></tr>
+          <tr><td class="mono">90</td><td>Ninety minutes — a bare number is read as minutes</td></tr>
+          <tr><td class="mono">PT2H30M</td><td>Two hours thirty, in the ISO form Clockify itself returns</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Names instead of ids</h3>
+    <p class="muted">
+      Every tool that takes a project, a task or a tag also takes its name. "Log an hour on Velocorner"
+      resolves <i>Velocorner</i> to its id for you. If the name matches more than one thing, you get
+      the candidates back rather than a silent guess at the wrong project.
+    </p>
+
+    <div class="note calm">
+      <b>Totals without a paid plan.</b> Clockify's Reports API needs a paid subscription.
+      <code>clockify_time_summary</code> adds up the time entries themselves instead, so totals per
+      project, per day or per tag work on the free plan too.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ SAFETY -->
+<section id="safety">
+  <div class="wrap">
+    <p class="kicker">Safety</p>
+    <h2>Keeping the assistant on a short leash</h2>
+    <p class="lead">
+      Two headers cover the two things people worry about: it changing something it should not, and it
+      seeing a workspace it should not.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <h4>Read-only</h4>
+        <p>
+          <code>X-Clockify-Read-Only: true</code> refuses every tool that writes. Reporting, reviewing
+          and answering "how much did we spend on this client" all still work.
+        </p>
+      </div>
+      <div class="card">
+        <h4>One workspace only</h4>
+        <p>
+          <code>X-Clockify-Workspace-Id</code> plus <code>X-Clockify-Workspace-Lock: true</code> confines
+          every tool to that workspace. Listing the others is refused, and so is a raw API call that
+          points anywhere else.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Deletion needs saying so</h4>
+        <p>
+          Deleting an entry, a project, a client or a tag requires an explicit confirmation flag, so it
+          cannot happen as a side effect of a vaguely worded request.
+        </p>
+      </div>
+    </div>
+
+    <h3>What the service keeps</h3>
+    <p class="muted">
+      Nothing. No accounts, no database, nothing written to disk. Your key and the data it fetches pass
+      through in one request and are gone when it ends; the server talks to exactly two parties, your
+      assistant and Clockify. Whatever the assistant reads does, of course, become part of your
+      conversation with it — the same as pasting it yourself. If your policy forbids credentials
+      leaving your network, <a href="#selfhost">run your own copy</a>; it is the same code.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ TOOLS -->
+<section id="tools">
+  <div class="wrap">
+    <p class="kicker">Reference</p>
+    <h2>All 61 tools</h2>
+    <p class="lead">
+      You never type these — the assistant picks them. The list is here so you can see exactly what it
+      can and cannot do.
+    </p>
+
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="filter, e.g. timer, project, report" aria-label="Filter tools">
+      <button class="chip" data-cat="all" aria-pressed="true">all</button>
+      <button class="chip" data-cat="time" aria-pressed="false">time</button>
+      <button class="chip" data-cat="projects" aria-pressed="false">projects</button>
+      <button class="chip" data-cat="people" aria-pressed="false">people</button>
+      <button class="chip" data-cat="reports" aria-pressed="false">reports</button>
+      <button class="chip" data-cat="timeoff" aria-pressed="false">time off</button>
+      <button class="chip" data-cat="other" aria-pressed="false">other</button>
+      <span id="count"></span>
+    </div>
+
+    <div class="tblwrap">
+      <table id="tooltable">
+        <thead><tr><th>Tool</th><th>What it does</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr data-cat="people"><td class="mono">clockify_whoami</td><td>The account behind the API key: name, email, active workspace, time zone, and how this server is configured (workspace lock, read-only).</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_list_workspaces</td><td>Every workspace the API key can see.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_get_workspace</td><td>Full workspace record: settings, features, currencies and your membership in it.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_workspace_users</td><td>People in the workspace, with their ids — needed whenever a tool asks for <code>user_id</code>.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_find_user</td><td>Resolves a person to their Clockify id from a name or an email fragment, so a request like "what did Anna work on" does not need ids typed by hand.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_list_user_groups</td><td>Teams defined in the workspace, with their member ids.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_current_timer</td><td>The timer running right now, with how long it has been going.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_start_timer</td><td>Starts the clock.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_stop_timer</td><td>Stops the running timer and returns the finished entry with its duration.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_log_time</td><td>Writes a completed time entry.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_log_many</td><td>Writes several finished entries in one call — a full workday reconstructed from notes or commits.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_list_time_entries</td><td>Time entries for a person over a day or a range, newest first, with a total.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_time_summary</td><td>Totals per project, task, day or tag for a period — computed from the entries themselves, so it also works on the free plan, where the Reports API is not available.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_get_time_entry</td><td>One time entry in full, with its project, task and tags resolved.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_update_time_entry</td><td>Changes description, project, tags or times.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="time"><td class="mono">clockify_delete_time_entry</td><td>Removes a time entry permanently.</td><td><span class="rw w">delete</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_list_projects</td><td>Projects in the workspace, with their ids, clients and archived state.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_find_project</td><td>Looks a project up by name and returns the candidates with their ids — the quickest way from what a person calls a project to what the API needs.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_get_project</td><td>One project in full: client, estimates, memberships, hourly rate.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_create_project</td><td>Adds a project to the workspace.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_update_project</td><td>Renames, re-colours, archives or restores a project.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_delete_project</td><td>Deletes a project.</td><td><span class="rw w">delete</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_list_clients</td><td>Clients in the workspace.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_create_client</td><td>Adds a client to the workspace.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_update_client</td><td>Renames or archives a client.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_delete_client</td><td>Removes a client.</td><td><span class="rw w">delete</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_list_tasks</td><td>Tasks of a project, with their ids and status.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_get_task</td><td>One task in full.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_create_task</td><td>Adds a task to a project.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_update_task</td><td>Renames a task, reassigns it or marks it done.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_delete_task</td><td>Removes a task from a project.</td><td><span class="rw w">delete</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_list_tags</td><td>Tags defined in the workspace.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_create_tag</td><td>Adds a tag to the workspace.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_update_tag</td><td>Renames or archives a tag.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="projects"><td class="mono">clockify_delete_tag</td><td>Removes a tag.</td><td><span class="rw w">delete</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_invite_user</td><td>Sends a workspace invitation.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_set_user_status</td><td>Changes a member's status in the workspace without deleting their history.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_remove_user</td><td>Removes someone from the workspace.</td><td><span class="rw w">delete</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_create_user_group</td><td>Adds a team to the workspace.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_update_user_group</td><td>Renames a team.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_add_user_to_group</td><td>Puts someone into a team.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_remove_user_from_group</td><td>Takes someone out of a team.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="people"><td class="mono">clockify_delete_user_group</td><td>Removes a team.</td><td><span class="rw w">delete</span></td></tr>
+          <tr data-cat="reports"><td class="mono">clockify_summary_report</td><td>Totals grouped the way the Clockify summary report groups them, for the whole workspace.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="reports"><td class="mono">clockify_detailed_report</td><td>Every time entry in the range across the workspace, one row each.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="reports"><td class="mono">clockify_weekly_report</td><td>The weekly grid: rows per project or person, columns per day.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_list_holidays</td><td>Public and company holidays configured in the workspace.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_create_holiday</td><td>Adds a holiday to the workspace calendar.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_delete_holiday</td><td>Removes a holiday.</td><td><span class="rw w">delete</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_list_time_off_policies</td><td>Vacation, sick leave and other policies, with the ids a request needs.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_time_off_balance</td><td>How many days are left under each policy for a person.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_list_time_off_requests</td><td>Requests in the workspace — pending ones are what an approver looks for.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_request_time_off</td><td>Files a time-off request against a policy.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_list_approval_requests</td><td>Submitted timesheets awaiting approval.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="timeoff"><td class="mono">clockify_submit_approval</td><td>Submits your week for approval.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="other"><td class="mono">clockify_list_custom_fields</td><td>Custom fields defined on the workspace.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="other"><td class="mono">clockify_list_expenses</td><td>Expenses recorded in the workspace.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="other"><td class="mono">clockify_create_expense</td><td>Records an expense.</td><td><span class="rw w">write</span></td></tr>
+          <tr data-cat="other"><td class="mono">clockify_list_invoices</td><td>Invoices in the workspace.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="other"><td class="mono">clockify_list_webhooks</td><td>Webhooks registered on the workspace.</td><td><span class="rw r">read</span></td></tr>
+          <tr data-cat="other"><td class="mono">clockify_api_request</td><td>Any Clockify endpoint that has no dedicated tool.</td><td><span class="rw r">read</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <p class="kicker">FAQ</p>
+    <h2>Questions people actually ask</h2>
+
+    <details>
+      <summary>Do I need a paid Clockify plan?</summary>
+      <p>No. Timers, time entries, projects, tasks, tags, people and time off all work on the free
+      plan, and <code>clockify_time_summary</code> totals your time by adding up the entries themselves.
+      Only the Reports API, expenses, invoices, approvals and custom fields are paid features; those
+      tools return a 403 that says so.</p>
+    </details>
+
+    <details>
+      <summary>Which time zone are my hours logged in?</summary>
+      <p>The one set on your Clockify profile, which <code>clockify_whoami</code> reports. Say "09:00"
+      and it means nine in the morning where you are. Send <code>X-Clockify-Timezone</code> with an
+      IANA name such as <code>Europe/Zurich</code> to override it, or give a full ISO instant to bypass
+      the question entirely.</p>
+    </details>
+
+    <details>
+      <summary>Can it overwrite or delete my existing time entries?</summary>
+      <p>Only if you ask. Deleting requires an explicit <code>confirm</code> flag, and sending
+      <code>X-Clockify-Read-Only: true</code> refuses every tool that changes anything, which makes the
+      connection safe for reporting and review.</p>
+    </details>
+
+    <details>
+      <summary>Where does my API key go?</summary>
+      <p>It travels as a header with each request and is used to call Clockify. The service keeps no
+      accounts, no database and writes nothing to disk. If your policy forbids credentials passing
+      through someone else's host, run the container yourself — it is the same code.</p>
+    </details>
+
+    <details>
+      <summary>Can I keep the assistant inside one workspace?</summary>
+      <p>Yes. Set <code>X-Clockify-Workspace-Id</code> to the workspace and
+      <code>X-Clockify-Workspace-Lock</code> to <code>true</code>. Every tool is then confined to it,
+      listing other workspaces is refused, and even the raw API escape hatch has to address that
+      workspace.</p>
+    </details>
+
+    <details>
+      <summary>Do I have to look up project ids?</summary>
+      <p>No. Every tool that takes a project, task or tag also accepts its name. An ambiguous name is
+      reported with the candidates instead of being guessed at.</p>
+    </details>
+
+    <details>
+      <summary>Can it log time for other people?</summary>
+      <p>With an admin key, yes: pass <code>user_id</code> and the entry is written through the admin
+      endpoint. With an ordinary member key Clockify refuses, which is the correct outcome.</p>
+    </details>
+
+    <details>
+      <summary>What happens if I ask for a day that is already approved?</summary>
+      <p>Clockify locks approved and archived periods, and the API refuses to write into them. The tool
+      passes that refusal straight through rather than pretending the entry was created.</p>
+    </details>
+
+    <details>
+      <summary>Can I connect two Clockify accounts at once?</summary>
+      <p>Yes. Add two entries with different names and different keys — for example <code>clockify</code>
+      and <code>clockify-agency</code>. The assistant sees both sets of tools and picks by name.</p>
+    </details>
+
+    <details>
+      <summary>Something has no tool. Am I stuck?</summary>
+      <p>No. <code>clockify_api_request</code> reaches any endpoint of the Clockify API, including the
+      reports and time-off hosts, while still respecting read-only mode and the workspace lock.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ============================================================ TROUBLE -->
+<section id="trouble">
+  <div class="wrap">
+    <p class="kicker">Troubleshooting</p>
+    <h2>When something does not work</h2>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>What you see</th><th>What it means and what to do</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">401 Unauthorized</td><td>The API key is wrong, or it was regenerated in Clockify, which invalidates the old one immediately. Copy it again from Profile settings → API</td></tr>
+          <tr><td class="mono">403 Forbidden</td><td>Either the feature needs a paid plan (reports, expenses, invoices, approvals, custom fields) or your role in the workspace is too low for that action</td></tr>
+          <tr><td class="mono">404 Not Found</td><td>Wrong id, or the key's owner is not a member of that workspace. <code>clockify_list_workspaces</code> shows what the key can actually see</td></tr>
+          <tr><td>The assistant has no clockify tools</td><td>The connection was not registered. Check the URL ends in <code>/mcp</code>, that the transport is HTTP, and restart the app completely. <code>curl https://clockify-mcp.webapace.ink/health</code> tells you whether the service itself is up</td></tr>
+          <tr><td>Edits to the config change nothing, or a server named <code>clockify</code> keeps failing</td><td>Another entry with the same name is winning. In Claude Code a server added to the local scope (stored in <code>~/.claude.json</code>) takes precedence over the project's <code>.mcp.json</code>. <code>claude mcp list</code> shows which one is used; <code>claude mcp remove clockify -s local</code> removes the stale one</td></tr>
+          <tr><td class="mono">No Clockify API key supplied</td><td>The <code>X-Clockify-Key</code> header did not arrive. Some clients drop unknown headers — check the spelling and that it sits in the right block</td></tr>
+          <tr><td>Entries land on the wrong day</td><td>Ask <code>clockify_whoami</code> what time zone it thinks you are in. If Clockify has the wrong one, either fix it in your profile or send <code>X-Clockify-Timezone</code></td></tr>
+          <tr><td>"matches 3 projects"</td><td>The name was ambiguous, and guessing would have booked hours to the wrong client. Use the exact name, or the id from <code>clockify_find_project</code></td></tr>
+          <tr><td class="mono">429 Too Many Requests</td><td>Clockify allows about 50 requests a second per key. Ask for a narrower range, or wait a moment</td></tr>
+          <tr><td class="mono">Refused: … CLOCKIFY_READ_ONLY</td><td>Working as intended: the tool would change something and read-only mode is on</td></tr>
+          <tr><td class="mono">Refused: … CLOCKIFY_WORKSPACE_LOCK</td><td>Working as intended: the request pointed outside the locked workspace</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ SELF-HOSTING -->
+<section id="selfhost">
+  <div class="wrap">
+    <p class="kicker">Self-hosting</p>
+    <h2>Running it yourself</h2>
+    <p class="lead">
+      One case needs your own copy: a policy that forbids credentials passing through someone else's
+      host. The code is public and runs in a container or as a local process.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <h4>As a container</h4>
+        <p>
+          The image serves the same landing page on <code>/</code> and the same MCP endpoint on
+          <code>/mcp</code>. Point your assistant at your own address instead of this one; every header
+          on this page behaves identically.
+        </p>
+      </div>
+      <div class="card">
+        <h4>As a local process</h4>
+        <p>
+          Over stdio, with the API key in an environment variable and nothing listening on a port at
+          all. Nothing leaves your machine except the calls to Clockify itself.
+        </p>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Everything is documented in the repository.</b> The
+      <a href="https://github.com/amalychev/clockify-mcp" rel="noopener">README</a> covers both modes,
+      every environment variable, the Docker build, the deployment settings, and how to add tools of
+      your own.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Clockify MCP · endpoint <code>https://clockify-mcp.webapace.ink/mcp</code> ·
+    source and full documentation on
+    <a href="https://github.com/amalychev/clockify-mcp" rel="noopener">GitHub</a>
+  </div>
+</footer>
+
+<script>
+  // Copy buttons on every code block.
+  for (const button of document.querySelectorAll(".copy")) {
+    button.addEventListener("click", async () => {
+      const code = button.parentElement.querySelector("pre").innerText;
+      try {
+        await navigator.clipboard.writeText(code);
+        button.textContent = "copied";
+        setTimeout(() => (button.textContent = "copy"), 1400);
+      } catch {
+        button.textContent = "press ⌘C";
+      }
+    });
+  }
+
+  // Client tabs in the setup section.
+  const tabs = [...document.querySelectorAll(".tab")];
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => {
+      for (const other of tabs) {
+        const panel = document.getElementById(other.dataset.panel);
+        const selected = other === tab;
+        other.setAttribute("aria-selected", String(selected));
+        panel.hidden = !selected;
+      }
+    });
+  }
+
+  // Tool explorer: text search combined with a category filter.
+  const rows = [...document.querySelectorAll("#tooltable tbody tr")];
+  const searchInput = document.getElementById("search");
+  const chips = [...document.querySelectorAll(".chip")];
+  const counter = document.getElementById("count");
+  let category = "all";
+
+  function applyFilter() {
+    const term = searchInput.value.trim().toLowerCase();
+    let visible = 0;
+    for (const row of rows) {
+      const matchesCategory = category === "all" || row.dataset.cat === category;
+      const matchesTerm = !term || row.innerText.toLowerCase().includes(term);
+      const show = matchesCategory && matchesTerm;
+      row.hidden = !show;
+      if (show) visible++;
+    }
+    counter.textContent = visible === rows.length
+      ? rows.length + " tools"
+      : visible + " of " + rows.length + " tools";
+  }
+
+  searchInput.addEventListener("input", applyFilter);
+  for (const chip of chips) {
+    chip.addEventListener("click", () => {
+      category = chip.dataset.cat;
+      for (const other of chips) other.setAttribute("aria-pressed", String(other === chip));
+      applyFilter();
+    });
+  }
+  applyFilter();
+</script>
+
+</body>
+</html>
