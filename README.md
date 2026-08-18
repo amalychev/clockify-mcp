@@ -1,5 +1,7 @@
 # Clockify MCP
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/amalychev-clockify-mcp-1fbicn?v=d3901e6d15dddc523e41eed65d61c0a5)](https://m8ven.ai/mcp/amalychev-clockify-mcp-1fbicn)
+
 An MCP server for [Clockify](https://clockify.me) — timers, time entries, projects, tasks, tags,
 people, reports and time off, over the Model Context Protocol.
 
