@@ -11,7 +11,8 @@
   "files": [
     "dist",
     "landing.html",
-    "assets"
+    "assets",
+    "test"
   ],
   "engines": {
     "node": ">=20"
