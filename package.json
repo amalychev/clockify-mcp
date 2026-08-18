@@ -2,6 +2,7 @@
   "name": "clockify-mcp",
   "version": "1.0.0",
   "description": "MCP server for Clockify: time entries, timers, projects, reports and time off, with local-timezone aware logging",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "clockify-mcp": "dist/index.js"
@@ -20,6 +21,7 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "start:http": "MCP_TRANSPORT=http node dist/index.js",
+    "test": "npm run build && node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "assets": "node scripts/build-assets.mjs",
     "prepare": "npm run build"
